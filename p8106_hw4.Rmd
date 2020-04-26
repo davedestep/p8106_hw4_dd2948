@@ -1,0 +1,145 @@
+---
+title: "p8106_hw4"
+author: "David DeStephano"
+date: "April 25, 2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(caret) # only for plot
+library(lasso2) # only for data
+library(tidyverse)
+
+library(ISLR)
+library(rpart) #cart
+library(rpart.plot)
+library(party)
+library(partykit)
+library(randomForest)
+library(ranger)
+library(gbm)
+library(plotmo)
+library(pdp)
+library(lime)
+```
+
+
+```{r}
+data(Prostate)
+
+```
+
+#Part A: Fitting a regression tree to prostate data
+```{r}
+set.seed(1)
+tree1 <-rpart(formula = lpsa~., data = Prostate)
+rpart.plot(tree1)
+
+cpTable <-printcp(tree1)
+plotcp(tree1)
+minErr <-which.min(cpTable[,4])
+#minimum cross-validation error
+min_tree <-prune(tree1, cp = cpTable[minErr,1])
+rpart.plot(min_tree)
+
+
+# 1SE rule
+se_tree <-prune(tree1, cp =
+                cpTable[cpTable[,4]<cpTable[minErr,4]+cpTable[minErr,5],1][1])
+
+
+rpart.plot(se_tree)
+
+
+```
+
+
+The tree size that corresponds to the lowest cross-validation error is 8, using the 1 SE error rule the tree size is 3. 
+
+#Part B: plot the final tree
+
+When looking at the plotcp, the left most value where the mean is below the horizontal line is 3. This corresponds to the pruned tree using the 1 SE rule,so this is the tree that will be used. This model suggests that lcavol is the only predictor of importance when predicting lpsa and keeping at a reasonable error rate.
+
+```{r}
+rpart.plot(se_tree)
+```
+
+Interpretation of terminal node 1: When lcval is less than -.48, the mean lpsa is 2.3. This node contains 9% of the sample.
+
+#Part C Bagging
+
+```{r}
+#Create training and test data
+set.seed(1)
+train = sample(1:nrow(Prostate), nrow(Prostate)/2)
+#Use all variables for mtry
+bagging <-randomForest(lpsa~., Prostate, subset=train,
+                       mtry = 8, importance=TRUE)
+
+bagging$importance
+```
+
+
+#Part D Random Forest
+```{r}
+set.seed(1)
+#Use number of variables divided by three rounded down
+rf <-randomForest(lpsa~., Prostate, subset=train,
+                  mtry = 2, importance=TRUE)
+rf$importance
+```
+
+
+#Part E Boosting
+```{r}
+set.seed(1)
+
+bst <-gbm(lpsa~., data=Prostate[train,],
+          distribution = "gaussian",
+          n.trees = 5000,
+          interaction.depth = 3,
+          shrinkage = 0.005,
+          cv.folds = 10)
+
+ensemble.nt <-gbm.perf(bst, method = "cv")
+
+
+```
+
+#PArt F compare models
+
+```{r}
+prostate.test=Prostate[-train,"lpsa"]
+
+#Bag
+yhat.bag = predict(bagging,newdata=Prostate[-train,])
+plot(yhat.bag, prostate.test)
+abline(0,1)
+mean((yhat.bag-prostate.test)^2)
+
+#RF
+yhat.rf = predict(rf,newdata=Prostate[-train,])
+plot(yhat.rf, prostate.test)
+abline(0,1)
+mean((yhat.rf-prostate.test)^2)
+
+
+#Boost
+yhat.boost=predict(bst,newdata=Prostate[-train,],n.trees=5000)
+plot(yhat.boost, prostate.test)
+abline(0,1)
+
+mean((yhat.boost-prostate.test)^2)
+
+
+
+```
+
+
+From the models fitted above, I would choose the bagged model as it has the lowest MSE, however, the boosted model should theoretically perform best, so if this were a project for work I would likely tune the model more carefully and chose a different corssvalidation method, and I would then expect the boosted model to perform best.
+
