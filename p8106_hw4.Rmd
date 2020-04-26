@@ -2,7 +2,9 @@
 title: "p8106_hw4"
 author: "David DeStephano"
 date: "April 25, 2020"
-output: github_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -26,15 +28,17 @@ library(gbm)
 library(plotmo)
 library(pdp)
 library(lime)
+library(ModelMetrics)
 ```
 
+#Question 1
 
 ```{r}
 data(Prostate)
 
 ```
 
-#Part A: Fitting a regression tree to prostate data
+##Part A: Fitting a regression tree to prostate data
 ```{r}
 set.seed(1)
 tree1 <-rpart(formula = lpsa~., data = Prostate)
@@ -61,7 +65,7 @@ rpart.plot(se_tree)
 
 The tree size that corresponds to the lowest cross-validation error is 8, using the 1 SE error rule the tree size is 3. 
 
-#Part B: plot the final tree
+##Part B: plot the final tree
 
 When looking at the plotcp, the left most value where the mean is below the horizontal line is 3. This corresponds to the pruned tree using the 1 SE rule,so this is the tree that will be used. This model suggests that lcavol is the only predictor of importance when predicting lpsa and keeping at a reasonable error rate.
 
@@ -71,7 +75,7 @@ rpart.plot(se_tree)
 
 Interpretation of terminal node 1: When lcval is less than -.48, the mean lpsa is 2.3. This node contains 9% of the sample.
 
-#Part C Bagging
+##Part C Bagging
 
 ```{r}
 #Create training and test data
@@ -85,7 +89,7 @@ bagging$importance
 ```
 
 
-#Part D Random Forest
+##Part D Random Forest
 ```{r}
 set.seed(1)
 #Use number of variables divided by three rounded down
@@ -95,7 +99,7 @@ rf$importance
 ```
 
 
-#Part E Boosting
+##Part E Boosting
 ```{r}
 set.seed(1)
 
@@ -108,10 +112,10 @@ bst <-gbm(lpsa~., data=Prostate[train,],
 
 ensemble.nt <-gbm.perf(bst, method = "cv")
 
-
+summary(bst,las = 2, cBars = 19, cex.names = 0.6)
 ```
 
-#PArt F compare models
+##Part F compare models
 
 ```{r}
 prostate.test=Prostate[-train,"lpsa"]
@@ -142,4 +146,112 @@ mean((yhat.boost-prostate.test)^2)
 
 
 From the models fitted above, I would choose the bagged model as it has the lowest MSE, however, the boosted model should theoretically perform best, so if this were a project for work I would likely tune the model more carefully and chose a different corssvalidation method, and I would then expect the boosted model to perform best.
+
+
+#Question 2
+
+##Will be using Caret for this set of problems
+
+```{r}
+data(OJ)
+
+set.seed(1)
+rowTrain = createDataPartition(OJ$Purchase,
+                               p=800/1070,
+                               list=F)
+
+train <- OJ[rowTrain, ]
+test <- OJ[-rowTrain, ]
+```
+
+##Tree
+```{r}
+ctrl <-trainControl(method = "cv")
+
+set.seed(1)
+rpart.fit <-train(Purchase~., train,
+                  method = "rpart",
+                  tuneGrid =data.frame(cp =exp(seq(-6,-3, length = 20))),
+                  trControl = ctrl)
+
+
+ggplot(rpart.fit, highlight =TRUE)
+
+rpart.fit$bestTune
+
+rpart.plot(rpart.fit$finalModel)
+
+```
+
+
+```{r}
+predy2.rpart <-predict(rpart.fit, newdata = test)
+
+mse(predy2.rpart, test$Purchase)
+
+```
+
+The test classification error rate is 18%
+
+
+##Random Forest
+
+```{r}
+# ctrl2 <-trainControl(method = "cv",
+#                     classProbs=TRUE)
+
+rf.grid <-expand.grid(mtry = 1:6,
+                      splitrule = "gini",
+                      min.node.size = 1:6)
+set.seed(1)
+rf.fit <-train(Purchase~., train, 
+               method = "ranger",
+               tuneGrid=rf.grid,
+               trControl=ctrl,
+               importance="permutation")
+
+ggplot(rf.fit, highlight = TRUE)
+```
+
+```{r}
+barplot(sort(ranger::importance(rf.fit$finalModel), decreasing = FALSE),
+        las = 2, horiz = TRUE, cex.names = 0.7,
+        col =colorRampPalette(colors =c("darkred","white","darkblue"))(19))
+```
+```{r}
+predy2.rf <-predict(rf.fit, newdata = test)
+
+mse(predy2.rf, test$Purchase)
+
+```
+
+The MSE is 0.197
+
+##Part C Boosting
+
+```{r}
+gbm.grid <-expand.grid(n.trees =c(2000,3000),
+                       interaction.depth = 2:10,
+                       shrinkage =c(0.001,0.003,0.005),
+                       n.minobsinnode = 1)
+set.seed(1)
+gbm.fit <-train(Purchase~., train,
+                method = "gbm",
+                tuneGrid = gbm.grid,
+                trControl = ctrl,
+                verbose = FALSE)
+
+ggplot(gbm.fit, highlight = TRUE)
+```
+
+```{r}
+summary(gbm.fit$finalModel, las = 2, cBars = 19, cex.names = 0.6)
+
+predy2.gbm <-predict(gbm.fit, newdata = test)
+
+mse(predy2.gbm, test$Purchase)
+
+```
+
+The error is 0.17
 
