@@ -39,6 +39,8 @@ All predictor variables were included.
 
 Random forest outpeformed the linear model appreciably, and marginally outperformed the decision tree model.
 
+The results for both metrics adopted, MAE, can be seen in the file. In the scale from 1 to 5 used for the score on TripAdvisor, the random forest (the best model) achieved a MAE/average absolute deviation of 0.759. This tells us the model, on average, is within one star of predicting the real score. 
+
 
 
 
@@ -65,7 +67,7 @@ trip2 <- trip[,-14]
 ##Data viz here!!!
 ```{r}
 ggplot(trip, aes(x=traveler_type, y=score)) + 
-  geom_boxplot()
+  geom_violin()
 
 
 nums<-select_if(trip, is.numeric)
@@ -205,6 +207,12 @@ coef(lm.fit$finalModel) %>% knitr::kable()
 ##Decision Tree
 ```{r}
 set.seed(1)
+tree1 <- rpart(formula = score~., data = train)
+rpart.plot(tree1)
+
+
+
+set.seed(1)
 rpart.fit <-train(score~., train,
                   method = "rpart",
                   tuneGrid =data.frame(cp =exp(seq(-6,-3, length = 20))),
@@ -259,7 +267,31 @@ rmse(test$score, predy.rf)
 
 
 
-##SVM
+##SVM/Support Vector Regression
+```{r warning=FALSE, message=FALSE}
+svr.fit <- train(score ~ .,  data = train,
+                 method= "svmLinear2",
+                 preProcess = c("center", "scale"),
+                 tuneGrid = data.frame(cost = exp(seq(-10,-5,len=20))),
+                 trControl = ctrl1) 
+
+ggplot(svr.fit, highlight = TRUE)
+
+```
+
+```{r}
+predy.svr <-predict(svr.fit, newdata = test)
+
+
+
+mae(test$score, predy.svr)
+mse(test$score, predy.svr)
+rmse(test$score, predy.svr)
+
+```
+
+
+
 
 
 
@@ -267,7 +299,7 @@ rmse(test$score, predy.rf)
 ##Compare models
 
 ```{r}
-resamp <-resamples(list(lm = lm.fit, rpart = rpart.fit, rf=rf.fit))
+resamp <-resamples(list(lm = lm.fit, rpart = rpart.fit, rf=rf.fit, svr=svr.fit))
 summary(resamp)
 
 bwplot((resamp), metric = "RMSE")
