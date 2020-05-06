@@ -2,7 +2,7 @@
 title: "Final_TripAdvisor"
 author: "David DeStephano"
 date: "May 5, 2020"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -203,6 +203,30 @@ coef(lm.fit$finalModel) %>% knitr::kable()
 
 ```
 
+##Lasso Regression
+```{r}
+set.seed(1)
+lasso.fit <- train(score~., 
+                   data=train,
+                   method = "glmnet",
+                   tuneGrid = expand.grid(alpha = 1,
+                                          lambda = exp(seq(-4, 1, length=100))),
+                   preProc = c("center", "scale"),
+trControl = ctrl1)
+
+
+ggplot(lasso.fit, highlight = TRUE) + theme_bw()
+lasso.fit$bestTune
+
+predy.lasso <-predict(lasso.fit, newdata = test)
+
+mae(test$score, predy.lasso)
+mse(test$score, predy.lasso)
+rmse(test$score, predy.lasso)
+
+```
+
+
 
 ##Decision Tree
 ```{r}
@@ -299,7 +323,7 @@ rmse(test$score, predy.svr)
 ##Compare models
 
 ```{r}
-resamp <-resamples(list(lm = lm.fit, rpart = rpart.fit, rf=rf.fit, svr=svr.fit))
+resamp <-resamples(list(lm = lm.fit, lasso=lasso.fit,rpart = rpart.fit, rf=rf.fit, svr=svr.fit))
 summary(resamp)
 
 bwplot((resamp), metric = "RMSE")
