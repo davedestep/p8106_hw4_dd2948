@@ -34,6 +34,11 @@ Unfortunately there are few numeric variables about the hotel itself, so the num
 
 Additionally, since scores can only be 1, 2, 3, 4, 5, scatter plots are not particularly useful for visualization. 
 
+#Models
+All predictor variables were included. 
+
+Random forest outpeformed the linear model appreciably, and marginally outperformed the decision tree model.
+
 
 
 
@@ -59,7 +64,7 @@ trip2 <- trip[,-14]
 
 ##Data viz here!!!
 ```{r}
-p <- ggplot(trip, aes(x=traveler_type, y=score)) + 
+ggplot(trip, aes(x=traveler_type, y=score)) + 
   geom_boxplot()
 
 
@@ -170,7 +175,7 @@ test <- trsf[-rowTrain, ]
 
 
 ##Linear regression
-```{r}
+```{r message=FALSE, warning=FALSE}
 ctrl1 <-trainControl(method = "cv", number = 5)
 set.seed(1)
 
@@ -197,7 +202,7 @@ coef(lm.fit$finalModel) %>% knitr::kable()
 ```
 
 
-#Decision Tree
+##Decision Tree
 ```{r}
 set.seed(1)
 rpart.fit <-train(score~., train,
@@ -209,11 +214,17 @@ ggplot(rpart.fit, highlight =TRUE)
 rpart.fit$bestTune
 
 rpart.plot(rpart.fit$finalModel)
+
+
+
+
+predy2.rpart <-predict(rpart.fit, newdata = test)
+mse(predy2.rpart, test$score)
 ```
 
-#RF
+##RF
 ```{r}
-rf.grid <-expand.grid(mtry = 1:51,
+rf.grid <-expand.grid(mtry = 1:12,
                       splitrule = "variance",
                       min.node.size = 1:5)
 
@@ -228,10 +239,41 @@ rf.fit <-train(score~., train,
 ggplot(rf.fit, highlight = TRUE)
 ```
 
+```{r}
+rfImp <- varImp(rf.fit, scale = FALSE)
+rfImp
+```
+
+
+```{r}
+predy.rf <-predict(rf.fit, newdata = test)
 
 
 
-#SVM
+mae(test$score, predy.rf)
+mse(test$score, predy.rf)
+rmse(test$score, predy.rf)
+
+```
+
+
+
+
+##SVM
+
+
+
+
+##Compare models
+
+```{r}
+resamp <-resamples(list(lm = lm.fit, rpart = rpart.fit, rf=rf.fit))
+summary(resamp)
+
+bwplot((resamp), metric = "RMSE")
+
+bwplot((resamp), metric = "MAE")
+```
 
 
 
