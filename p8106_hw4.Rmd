@@ -1,13 +1,10 @@
 ---
-title: "Final_TripAdvisor"
+title: "p8106_hw4"
 author: "David DeStephano"
-<<<<<<< HEAD
-date: "May 5, 2020"
-output: pdf_document
-=======
 date: "April 25, 2020"
-output: github_document
->>>>>>> parent of a4c02b3... Complete
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,46 +12,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r message=FALSE, warning=FALSE}
+```{r}
+library(caret) # only for plot
+library(lasso2) # only for data
 library(tidyverse)
-library(caret)
-library(colorspace)
-library(circlize)
-library(AppliedPredictiveModeling)
-library(ModelMetrics)
+
+library(ISLR)
 library(rpart) #cart
 library(rpart.plot)
-<<<<<<< HEAD
-
-```
-
-#Introduction
-Gaugeing how a potential guest would rate your and other hotels could be a pertinent question within marketing. It could allow you to tailor experiences for a certain guest, suggest additional features/amenities for a higher or lower price that you know the guest would enjoy based on their tripadvisor history. In this exercise, the researchers intend to simply predict guest ratings of a hotel, but this exercise could be extended to a prescriptive analytic framework, in which guest experiences could be tailored based on their tripadvisor accounts. 
-
-This data was precleaned, but multilevel factors were dummified. 
-
-There are some issues with this data, weekdays are sometime miscoded as the month. When modeling, the number of rooms is perfectly 1 to 1 with the hotel name, so coefficients are NA automatically. Honestly not exactly sure why this is hosted on UCI's machine learning repository. Having months in the day of week variable is particularly bad.
-
-#Exploratory Analysis
-Unfortunately there are few numeric variables about the hotel itself, so the numeric variables we do have show us more about the reviewers, namely, that reviewers that are very active on the site are less likely to leave negative reviews, or vice versa, that non-tripadvisor users are more likely to leave a negative review/people with no reviews will leave a bad review but not a good review. 
-
-Additionally, since scores can only be 1, 2, 3, 4, 5, scatter plots are not particularly useful for visualization. 
-
-#Models
-All predictor variables were included. 
-
-Random forest outpeformed the linear model appreciably, and marginally outperformed the decision tree model.
-
-The results for both metrics adopted, MAE, can be seen in the file. In the scale from 1 to 5 used for the score on TripAdvisor, the random forest (the best model) achieved a MAE/average absolute deviation of 0.759. This tells us the model, on average, is within one star of predicting the real score. 
-
-
-
-
-
-
-```{r warning=FALSE, message=FALSE}
-trip<-read_csv("C:\\Users\\daved\\Documents\\Data Sceince II\\p8106_final_dd2948\\LasVegasTripAdvisorReviews-Dataset.csv") %>% janitor::clean_names() %>% select(-x21)
-=======
 library(party)
 library(partykit)
 library(randomForest)
@@ -63,327 +28,230 @@ library(gbm)
 library(plotmo)
 library(pdp)
 library(lime)
->>>>>>> parent of a4c02b3... Complete
+library(ModelMetrics)
 ```
 
+#Question 1
 
-
-#Exploratory Analysis
 ```{r}
-trip[sapply(trip, is.character)] <- lapply(trip[sapply(trip, is.character)], 
-                                       as.factor)
-
-
-trip<-as.data.frame(trip)
-
-trip2 <- trip[,-14]
-```
-
-<<<<<<< HEAD
-
-##Data viz here!!!
-=======
-#Part A: Fitting a regression tree to prostate data
->>>>>>> parent of a4c02b3... Complete
-```{r}
-ggplot(trip, aes(x=traveler_type, y=score)) + 
-  geom_violin()
-
-
-nums<-select_if(trip, is.numeric)
-
-
-x <-model.matrix(score~.,nums)[,-1]
-
-y <- nums$score
-
-theme1 <-trellis.par.get()
-theme1$plot.symbol$col <-rgb(.2, .4, .2, .5)
-theme1$plot.symbol$pch <- 16
-theme1$plot.line$col <-rgb(.8, .1, .1, 1)
-theme1$plot.line$lwd <- 2
-theme1$strip.background$col <-rgb(.0, .2, .6, .2)
-trellis.par.set(theme1)
-
-featurePlot(x, y, plot = "scatter", labels =c("","Y"),type =c("p"), layout =c(4, 2))
-
-
+data(Prostate)
 
 ```
 
-Unfortunately there are few numeric variables about the hotel itself, so the numeric variables we do have show us more about the reviewers, namely, that reviewers that are very active on the site are less likely to leave negative reviews, or vice versa, that non-tripadvisor users are more likely to leave a negative review/people with no reviews will leave a bad review if they had a particularly bad experience.
-
-
-<<<<<<< HEAD
-=======
-#Part B: plot the final tree
->>>>>>> parent of a4c02b3... Complete
-
-
-##First let's try hierarchical clustering to see how hotels cluster together
-```{r warning=FALSE, message=FALSE}
-d_trip <- dist(trip2) # method="man" # is a bit better
-hc_trip <- hclust(d_trip, method = "complete")
-trip_hotel <- rev(levels(trip[,14]))
-
-
-<<<<<<< HEAD
-=======
-#Part C Bagging
->>>>>>> parent of a4c02b3... Complete
-
-library(dendextend)
-dend <- as.dendrogram(hc_trip)
-
-# Color the branches based on the clusters:
-dend <- color_branches(dend, k=21) #, groupLabels=trip_hotel)
-
-labels_colors(dend) <-
-   rainbow_hcl(21)[sort_levels_values(
-      as.numeric(trip[,14])[order.dendrogram(dend)]
-   )]
-
-# add the hotel name to the labels:
-labels(dend) <- paste(as.character(trip[,14])[order.dendrogram(dend)],
-                           "(",labels(dend),")", 
-                           sep = "")
-dend <- hang.dendrogram(dend,hang_height=0.1)
-# reduce the size of the labels:
-#dend <- assign_values_to_leaves_nodePar(dend, 0.05, "lab.cex")
-dend <- set(dend, "labels_cex", 0.4)
-# And plot:
-par(mar = c(3,3,3,7))
-plot(dend, 
-     main = "Clustered trip data set
-     (the labels give the true hotel name)", 
-     horiz =  TRUE,  nodePar = list(cex = .007))
-legend("topleft", legend = trip_hotel, fill = rainbow_hcl(21), cex=0.4)
-```
-
-
-<<<<<<< HEAD
-=======
-#Part D Random Forest
->>>>>>> parent of a4c02b3... Complete
-```{r}
-par(mar = rep(0,4))
-circlize_dendrogram(dend)
-```
-
-
-<<<<<<< HEAD
-
-
-
-=======
-#Part E Boosting
->>>>>>> parent of a4c02b3... Complete
-```{r}
-#hc.complete <- hclust(dist(trip), method = "complete")
-#hc.average <- hclust(dist(trip), method = "average")
-#hc.single <- hclust(dist(trip), method = "single")
-#hc.centroid <- hclust(dist(trip), method = "centroid")
-```
-
-#Models
-
-
-
-<<<<<<< HEAD
-##dummify the variables
-```{r}
-dmy<- dummyVars(" ~.", data=trip, fullRank = T)
-trsf <- data.frame(predict(dmy, newdata = trip))
-
-```
-
-=======
-
-```
-
-#PArt F compare models
->>>>>>> parent of a4c02b3... Complete
-
-
-
-##Create test and train datasets
+##Part A: Fitting a regression tree to prostate data
 ```{r}
 set.seed(1)
-rowTrain = createDataPartition(trsf$score,
-                               p=2/3,
-                               list=F)
-
-train <- trsf[rowTrain, ]
-test <- trsf[-rowTrain, ]
-
-```
-
-
-##Linear regression
-```{r message=FALSE, warning=FALSE}
-ctrl1 <-trainControl(method = "cv", number = 5)
-set.seed(1)
-
-lm.fit <-train(score~.,
-                data = train,
-                method = "lm", 
-                trControl = ctrl1)
-
-
-
-getTrainPerf(lm.fit)
-
-
-predy.lm <-predict(lm.fit, newdata = test)
-
-<<<<<<< HEAD
-
-
-mae(test$score, predy.lm)
-mse(test$score, predy.lm)
-rmse(test$score, predy.lm)
-
-coef(lm.fit$finalModel) %>% knitr::kable()
-
-```
-
-##Lasso Regression
-```{r}
-set.seed(1)
-lasso.fit <- train(score~., 
-                   data=train,
-                   method = "glmnet",
-                   tuneGrid = expand.grid(alpha = 1,
-                                          lambda = exp(seq(-4, 1, length=100))),
-                   preProc = c("center", "scale"),
-trControl = ctrl1)
-
-
-ggplot(lasso.fit, highlight = TRUE) + theme_bw()
-lasso.fit$bestTune
-
-predy.lasso <-predict(lasso.fit, newdata = test)
-
-mae(test$score, predy.lasso)
-mse(test$score, predy.lasso)
-rmse(test$score, predy.lasso)
-
-```
-
-
-
-##Decision Tree
-```{r}
-set.seed(1)
-tree1 <- rpart(formula = score~., data = train)
+tree1 <-rpart(formula = lpsa~., data = Prostate)
 rpart.plot(tree1)
 
+cpTable <-printcp(tree1)
+plotcp(tree1)
+minErr <-which.min(cpTable[,4])
+#minimum cross-validation error
+min_tree <-prune(tree1, cp = cpTable[minErr,1])
+rpart.plot(min_tree)
 
+
+# 1SE rule
+se_tree <-prune(tree1, cp =
+                cpTable[cpTable[,4]<cpTable[minErr,4]+cpTable[minErr,5],1][1])
+
+
+rpart.plot(se_tree)
+
+
+```
+
+
+The tree size that corresponds to the lowest cross-validation error is 8, using the 1 SE error rule the tree size is 3. 
+
+##Part B: plot the final tree
+
+When looking at the plotcp, the left most value where the mean is below the horizontal line is 3. This corresponds to the pruned tree using the 1 SE rule,so this is the tree that will be used. This model suggests that lcavol is the only predictor of importance when predicting lpsa and keeping at a reasonable error rate.
+
+```{r}
+rpart.plot(se_tree)
+```
+
+Interpretation of terminal node 1: When lcval is less than -.48, the mean lpsa is 2.3. This node contains 9% of the sample.
+
+##Part C Bagging
+
+```{r}
+#Create training and test data
+set.seed(1)
+train = sample(1:nrow(Prostate), nrow(Prostate)/2)
+#Use all variables for mtry
+bagging <-randomForest(lpsa~., Prostate, subset=train,
+                       mtry = 8, importance=TRUE)
+
+bagging$importance
+```
+
+
+##Part D Random Forest
+```{r}
+set.seed(1)
+#Use number of variables divided by three rounded down
+rf <-randomForest(lpsa~., Prostate, subset=train,
+                  mtry = 2, importance=TRUE)
+rf$importance
+```
+
+
+##Part E Boosting
+```{r}
+set.seed(1)
+
+bst <-gbm(lpsa~., data=Prostate[train,],
+          distribution = "gaussian",
+          n.trees = 5000,
+          interaction.depth = 3,
+          shrinkage = 0.005,
+          cv.folds = 10)
+
+ensemble.nt <-gbm.perf(bst, method = "cv")
+
+summary(bst,las = 2, cBars = 19, cex.names = 0.6)
+```
+
+##Part F compare models
+
+```{r}
+prostate.test=Prostate[-train,"lpsa"]
+
+#Bag
+yhat.bag = predict(bagging,newdata=Prostate[-train,])
+plot(yhat.bag, prostate.test)
+abline(0,1)
+mean((yhat.bag-prostate.test)^2)
+
+#RF
+yhat.rf = predict(rf,newdata=Prostate[-train,])
+plot(yhat.rf, prostate.test)
+abline(0,1)
+mean((yhat.rf-prostate.test)^2)
+
+
+#Boost
+yhat.boost=predict(bst,newdata=Prostate[-train,],n.trees=5000)
+plot(yhat.boost, prostate.test)
+abline(0,1)
+
+mean((yhat.boost-prostate.test)^2)
+
+
+
+```
+
+
+From the models fitted above, I would choose the bagged model as it has the lowest MSE, however, the boosted model should theoretically perform best, so if this were a project for work I would likely tune the model more carefully and chose a different corssvalidation method, and I would then expect the boosted model to perform best.
+
+
+#Question 2
+
+##Will be using Caret for this set of problems
+
+```{r}
+data(OJ)
 
 set.seed(1)
-rpart.fit <-train(score~., train,
+rowTrain = createDataPartition(OJ$Purchase,
+                               p=800/1070,
+                               list=F)
+
+train <- OJ[rowTrain, ]
+test <- OJ[-rowTrain, ]
+```
+
+##Tree
+```{r}
+ctrl <-trainControl(method = "cv")
+
+set.seed(1)
+rpart.fit <-train(Purchase~., train,
                   method = "rpart",
                   tuneGrid =data.frame(cp =exp(seq(-6,-3, length = 20))),
-                  trControl = ctrl1)
+                  trControl = ctrl)
+
+
 ggplot(rpart.fit, highlight =TRUE)
 
 rpart.fit$bestTune
 
 rpart.plot(rpart.fit$finalModel)
 
-
-
-
-predy2.rpart <-predict(rpart.fit, newdata = test)
-mse(predy2.rpart, test$score)
 ```
 
-##RF
+
 ```{r}
-rf.grid <-expand.grid(mtry = 1:12,
-                      splitrule = "variance",
-                      min.node.size = 1:5)
+predy2.rpart <-predict(rpart.fit, newdata = test)
 
+mse(predy2.rpart, test$Purchase)
+
+```
+
+The test classification error rate is 18%
+
+
+##Random Forest
+
+```{r}
+# ctrl2 <-trainControl(method = "cv",
+#                     classProbs=TRUE)
+
+rf.grid <-expand.grid(mtry = 1:6,
+                      splitrule = "gini",
+                      min.node.size = 1:6)
 set.seed(1)
-
-rf.fit <-train(score~., train,
+rf.fit <-train(Purchase~., train, 
                method = "ranger",
                tuneGrid=rf.grid,
-               trControl=ctrl1,
+               trControl=ctrl,
                importance="permutation")
 
 ggplot(rf.fit, highlight = TRUE)
 ```
 
 ```{r}
-rfImp <- varImp(rf.fit, scale = FALSE)
-rfImp
+barplot(sort(ranger::importance(rf.fit$finalModel), decreasing = FALSE),
+        las = 2, horiz = TRUE, cex.names = 0.7,
+        col =colorRampPalette(colors =c("darkred","white","darkblue"))(19))
+```
+```{r}
+predy2.rf <-predict(rf.fit, newdata = test)
+
+mse(predy2.rf, test$Purchase)
+
 ```
 
+The MSE is 0.197
+
+##Part C Boosting
 
 ```{r}
-predy.rf <-predict(rf.fit, newdata = test)
+gbm.grid <-expand.grid(n.trees =c(2000,3000),
+                       interaction.depth = 2:10,
+                       shrinkage =c(0.001,0.003,0.005),
+                       n.minobsinnode = 1)
+set.seed(1)
+gbm.fit <-train(Purchase~., train,
+                method = "gbm",
+                tuneGrid = gbm.grid,
+                trControl = ctrl,
+                verbose = FALSE)
 
-
-
-mae(test$score, predy.rf)
-mse(test$score, predy.rf)
-rmse(test$score, predy.rf)
-
-```
-
-
-
-
-##SVM/Support Vector Regression
-```{r warning=FALSE, message=FALSE}
-svr.fit <- train(score ~ .,  data = train,
-                 method= "svmLinear2",
-                 preProcess = c("center", "scale"),
-                 tuneGrid = data.frame(cost = exp(seq(-10,-5,len=20))),
-                 trControl = ctrl1) 
-
-ggplot(svr.fit, highlight = TRUE)
-
+ggplot(gbm.fit, highlight = TRUE)
 ```
 
 ```{r}
-predy.svr <-predict(svr.fit, newdata = test)
+summary(gbm.fit$finalModel, las = 2, cBars = 19, cex.names = 0.6)
 
+predy2.gbm <-predict(gbm.fit, newdata = test)
 
-
-mae(test$score, predy.svr)
-mse(test$score, predy.svr)
-rmse(test$score, predy.svr)
+mse(predy2.gbm, test$Purchase)
 
 ```
 
+The error is 0.17
 
-
-
-
-
-
-##Compare models
-
-```{r}
-resamp <-resamples(list(lm = lm.fit, lasso=lasso.fit,rpart = rpart.fit, rf=rf.fit, svr=svr.fit))
-summary(resamp)
-
-bwplot((resamp), metric = "RMSE")
-
-bwplot((resamp), metric = "MAE")
-```
-
-
-
-
-
-```{r message=FALSE, warning=FALSE}
-```{r message=FALSE, warning=FALSE}
-```{r message=FALSE, warning=FALSE}
-```{r message=FALSE, warning=FALSE}
-```{r message=FALSE, warning=FALSE}
-```{r message=FALSE, warning=FALSE}
-=======
->>>>>>> parent of a4c02b3... Complete
