@@ -1,8 +1,13 @@
 ---
 title: "Final_TripAdvisor"
 author: "David DeStephano"
+<<<<<<< HEAD
 date: "May 5, 2020"
 output: pdf_document
+=======
+date: "April 25, 2020"
+output: github_document
+>>>>>>> parent of a4c02b3... Complete
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +24,7 @@ library(AppliedPredictiveModeling)
 library(ModelMetrics)
 library(rpart) #cart
 library(rpart.plot)
+<<<<<<< HEAD
 
 ```
 
@@ -48,6 +54,16 @@ The results for both metrics adopted, MAE, can be seen in the file. In the scale
 
 ```{r warning=FALSE, message=FALSE}
 trip<-read_csv("C:\\Users\\daved\\Documents\\Data Sceince II\\p8106_final_dd2948\\LasVegasTripAdvisorReviews-Dataset.csv") %>% janitor::clean_names() %>% select(-x21)
+=======
+library(party)
+library(partykit)
+library(randomForest)
+library(ranger)
+library(gbm)
+library(plotmo)
+library(pdp)
+library(lime)
+>>>>>>> parent of a4c02b3... Complete
 ```
 
 
@@ -63,8 +79,12 @@ trip<-as.data.frame(trip)
 trip2 <- trip[,-14]
 ```
 
+<<<<<<< HEAD
 
 ##Data viz here!!!
+=======
+#Part A: Fitting a regression tree to prostate data
+>>>>>>> parent of a4c02b3... Complete
 ```{r}
 ggplot(trip, aes(x=traveler_type, y=score)) + 
   geom_violin()
@@ -94,6 +114,10 @@ featurePlot(x, y, plot = "scatter", labels =c("","Y"),type =c("p"), layout =c(4,
 Unfortunately there are few numeric variables about the hotel itself, so the numeric variables we do have show us more about the reviewers, namely, that reviewers that are very active on the site are less likely to leave negative reviews, or vice versa, that non-tripadvisor users are more likely to leave a negative review/people with no reviews will leave a bad review if they had a particularly bad experience.
 
 
+<<<<<<< HEAD
+=======
+#Part B: plot the final tree
+>>>>>>> parent of a4c02b3... Complete
 
 
 ##First let's try hierarchical clustering to see how hotels cluster together
@@ -103,6 +127,10 @@ hc_trip <- hclust(d_trip, method = "complete")
 trip_hotel <- rev(levels(trip[,14]))
 
 
+<<<<<<< HEAD
+=======
+#Part C Bagging
+>>>>>>> parent of a4c02b3... Complete
 
 library(dendextend)
 dend <- as.dendrogram(hc_trip)
@@ -133,15 +161,23 @@ legend("topleft", legend = trip_hotel, fill = rainbow_hcl(21), cex=0.4)
 ```
 
 
+<<<<<<< HEAD
+=======
+#Part D Random Forest
+>>>>>>> parent of a4c02b3... Complete
 ```{r}
 par(mar = rep(0,4))
 circlize_dendrogram(dend)
 ```
 
 
+<<<<<<< HEAD
 
 
 
+=======
+#Part E Boosting
+>>>>>>> parent of a4c02b3... Complete
 ```{r}
 #hc.complete <- hclust(dist(trip), method = "complete")
 #hc.average <- hclust(dist(trip), method = "average")
@@ -153,6 +189,7 @@ circlize_dendrogram(dend)
 
 
 
+<<<<<<< HEAD
 ##dummify the variables
 ```{r}
 dmy<- dummyVars(" ~.", data=trip, fullRank = T)
@@ -160,6 +197,12 @@ trsf <- data.frame(predict(dmy, newdata = trip))
 
 ```
 
+=======
+
+```
+
+#PArt F compare models
+>>>>>>> parent of a4c02b3... Complete
 
 
 
@@ -193,6 +236,7 @@ getTrainPerf(lm.fit)
 
 predy.lm <-predict(lm.fit, newdata = test)
 
+<<<<<<< HEAD
 
 
 mae(test$score, predy.lm)
@@ -341,3 +385,5 @@ bwplot((resamp), metric = "MAE")
 ```{r message=FALSE, warning=FALSE}
 ```{r message=FALSE, warning=FALSE}
 ```{r message=FALSE, warning=FALSE}
+=======
+>>>>>>> parent of a4c02b3... Complete
