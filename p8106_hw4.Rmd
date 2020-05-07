@@ -25,7 +25,7 @@ library(rpart.plot)
 #Introduction
 Gaugeing how a potential guest would rate your and other hotels could be a pertinent question within marketing. It could allow you to tailor experiences for a certain guest, suggest additional features/amenities for a higher or lower price that you know the guest would enjoy based on their tripadvisor history. In this exercise, the researchers intend to simply predict guest ratings of a hotel, but this exercise could be extended to a prescriptive analytic framework, in which guest experiences could be tailored based on their tripadvisor accounts. 
 
-This data was precleaned, but multilevel factors were dummified.
+This data was precleaned, but multilevel factors were dummified. 
 
 There are some issues with this data, weekdays are sometime miscoded as the month. When modeling, the number of rooms is perfectly 1 to 1 with the hotel name, so coefficients are NA automatically. Honestly not exactly sure why this is hosted on UCI's machine learning repository. Having months in the day of week variable is particularly bad.
 
